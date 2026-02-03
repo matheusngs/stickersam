@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Bebas+Neue&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #000000;
+  --surface: #1a1a1a;
+  --primary: #ec4899;
+  --primary-dark: #be185d;
+}
+
+body {
+  background-color: var(--background);
+  color: white;
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+@layer components {
+  .bebas {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.05em;
+  }
+
+  .gradient-bg {
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%);
+  }
+
+  .pink-glow {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
+  }
+
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(236, 72, 153, 0.4);
+  }
+
+  .sticker-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #ec4899, #be185d);
+    border-radius: 20px;
+    @apply flex items-center justify-center text-3xl;
+    transform: rotate(-10deg);
+  }
+}
