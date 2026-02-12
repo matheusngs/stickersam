@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase';
 import ProductCard from '@/components/ProductCard';
 
+export const revalidate = 0; // Força a página a buscar dados novos a cada acesso
+
 export default async function Home() {
   const { data: products, error } = await supabase
     .from('products')
