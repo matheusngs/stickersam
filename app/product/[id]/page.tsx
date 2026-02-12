@@ -2,8 +2,8 @@ import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   const { data: product, error } = await supabase
     .from('products')

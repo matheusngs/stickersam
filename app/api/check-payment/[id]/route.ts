@@ -5,10 +5,11 @@ export const revalidate = 0;
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const paymentId = params.id;
+    const { id } = await params;
+    const paymentId = id;
 
     // 1. Buscar pedido vinculado ao paymentId
     const { data: order, error: orderError } = await supabaseAdmin
