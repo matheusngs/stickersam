@@ -16,7 +16,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const [loading, setLoading] = useState(false);
-  const [pixData, setPixData] = useState<{ qrCodeBase64: string; copyPaste: string } | null>(null);
+  const [pixData, setPixData] = useState<{ paymentId: string; qrCodeBase64: string; copyPaste: string } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleBuy = async () => {
@@ -34,8 +34,9 @@ export default function ProductCard({ product }: ProductCardProps) {
       });
 
       const data = await response.json();
-      if (data.qrCodeBase64) {
+      if (data.qrCodeBase64 && data.paymentId) {
         setPixData({
+          paymentId: data.paymentId.toString(),
           qrCodeBase64: data.qrCodeBase64,
           copyPaste: data.copyPaste,
         });
@@ -76,6 +77,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <PixModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
+          paymentId={pixData.paymentId}
           qrCodeBase64={pixData.qrCodeBase64}
           copyPaste={pixData.copyPaste}
           productName={product.name}

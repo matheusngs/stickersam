@@ -5,24 +5,47 @@ import { X, Copy, Check } from 'lucide-react';
 interface PixModalProps {
   isOpen: boolean;
   onClose: () => void;
+  paymentId: string; // Adicionado para checagem
   qrCodeBase64: string;
   copyPaste: string;
   productName: string;
 }
 
-export default function PixModal({ isOpen, onClose, qrCodeBase64, copyPaste, productName }: PixModalProps) {
+export default function PixModal({ isOpen, onClose, paymentId, qrCodeBase64, copyPaste, productName }: PixModalProps) {
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [status, setStatus] = useState<'pending' | 'approved'>('pending');
 
   useEffect(() => {
     setMounted(true);
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
+
+      // Polling para verificar pagamento
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/check-payment/${paymentId}`);
+          const data = await res.json();
+
+          if (data.status === 'approved' && data.downloadUrl) {
+            setStatus('approved');
+            clearInterval(interval);
+            // Pequeno delay para o usuário ver a mensagem de sucesso antes do download
+            setTimeout(() => {
+              window.location.href = data.downloadUrl;
+            }, 2000);
+          }
+        } catch (err) {
+          console.error('Erro ao checar pagamento:', err);
+        }
+      }, 5000); // Checa a cada 5 segundos
+
+      return () => {
+        clearInterval(interval);
+        document.body.style.overflow = 'unset';
+      };
     }
-    return () => { document.body.style.overflow = 'unset'; };
-  }, [isOpen]);
+  }, [isOpen, paymentId]);
 
   if (!isOpen || !mounted) return null;
 
@@ -46,52 +69,69 @@ export default function PixModal({ isOpen, onClose, qrCodeBase64, copyPaste, pro
         </button>
 
         <div className="text-center space-y-6">
-          <div className="text-5xl">🎉</div>
-          <h2 className="bebas text-3xl text-[#ec4899]">Pagamento via Pix</h2>
-          <p className="text-sm text-gray-300">
-            Escaneie o código abaixo para finalizar a compra de: <br />
-            <span className="font-bold text-white text-lg">{productName}</span>
-          </p>
+          {status === 'approved' ? (
+            <>
+              <div className="text-6xl animate-bounce">🎊</div>
+              <h2 className="bebas text-4xl text-green-400">PAGAMENTO APROVADO!</h2>
+              <p className="text-gray-300">
+                Obrigado pela compra! <br />
+                O seu download vai começar em instantes...
+              </p>
+              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full bg-green-500 animate-progress origin-left"></div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-5xl">🎉</div>
+              <h2 className="bebas text-3xl text-[#ec4899]">Pagamento via Pix</h2>
+              <p className="text-sm text-gray-300">
+                Escaneie o código abaixo para finalizar a compra de: <br />
+                <span className="font-bold text-white text-lg">{productName}</span>
+              </p>
 
-          <div className="bg-white p-4 rounded-2xl inline-block mx-auto">
-            {qrCodeBase64 && (
-              <img
-                src={`data:image/png;base64,${qrCodeBase64}`}
-                alt="QR Code Pix"
-                className="w-48 h-48 mx-auto"
-              />
-            )}
-          </div>
+              <div className="bg-white p-4 rounded-2xl inline-block mx-auto">
+                {qrCodeBase64 && (
+                  <img
+                    src={`data:image/png;base64,${qrCodeBase64}`}
+                    alt="QR Code Pix"
+                    className="w-48 h-48 mx-auto"
+                  />
+                )}
+              </div>
 
-          <div className="space-y-2 text-left">
-            <p className="text-xs font-bold text-[#ec4899] uppercase tracking-widest">Código Copia e Cola</p>
-            <div className="flex gap-2">
-              <input
-                readOnly
-                value={copyPaste}
-                className="flex-1 bg-[#000000] border border-[#ec4899]/30 rounded-lg text-xs p-3 text-gray-300 focus:ring-0 truncate"
-              />
-              <button
-                onClick={handleCopy}
-                className={`p-3 rounded-lg transition-all hover:scale-105 ${copied ? 'bg-green-500 text-white' : 'bg-[#ec4899] text-black font-bold'}`}
-              >
-                {copied ? <Check size={16} /> : <Copy size={16} />}
-              </button>
-            </div>
-          </div>
+              <div className="space-y-2 text-left">
+                <p className="text-xs font-bold text-[#ec4899] uppercase tracking-widest">Código Copia e Cola</p>
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={copyPaste}
+                    className="flex-1 bg-[#000000] border border-[#ec4899]/30 rounded-lg text-xs p-3 text-gray-300 focus:ring-0 truncate"
+                  />
+                  <button
+                    onClick={handleCopy}
+                    className={`p-3 rounded-lg transition-all hover:scale-105 ${copied ? 'bg-green-500 text-white' : 'bg-[#ec4899] text-black font-bold'}`}
+                  >
+                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                  </button>
+                </div>
+              </div>
 
-          <div className="pt-6 border-t border-white/10">
-            <p className="text-xs text-gray-400">
-              Após o pagamento, o download será liberado automaticamente.
-            </p>
-            <a
-              href="https://wa.me/5592996313301"
-              target="_blank"
-              className="text-[#ec4899] text-xs font-bold mt-2 inline-block hover:underline"
-            >
-              Dúvidas? Fale conosco no WhatsApp
-            </a>
-          </div>
+              <div className="pt-6 border-t border-white/10">
+                <p className="text-xs text-gray-400 flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span>
+                  Aguardando confirmação do pagamento...
+                </p>
+                <a
+                  href="https://wa.me/5592996313301"
+                  target="_blank"
+                  className="text-[#ec4899] text-xs font-bold mt-2 inline-block hover:underline"
+                >
+                  Dúvidas? Fale conosco no WhatsApp
+                </a>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
